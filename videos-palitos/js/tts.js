@@ -9,7 +9,7 @@ export const HF = 'https://huggingface.co/diffusionstudio/piper-voices/resolve/m
 
 export const VOICES = {
   es: [
-    { id: 'es_MX-claude-high', path: 'es/es_MX/claude/high/es_MX-claude-high.onnx', label: 'Claude · México (alta calidad)' },
+    { id: 'es_MX-claude-high', path: 'es/es_MX/claude/high/es_MX-claude-high.onnx', label: 'Claude · México (alta calidad, más pesada)' },
     { id: 'es_MX-ald-medium', path: 'es/es_MX/ald/medium/es_MX-ald-medium.onnx', label: 'Ald · México' },
     { id: 'es_ES-davefx-medium', path: 'es/es_ES/davefx/medium/es_ES-davefx-medium.onnx', label: 'Davefx · España' },
     { id: 'es_ES-sharvard-medium', path: 'es/es_ES/sharvard/medium/es_ES-sharvard-medium.onnx', label: 'Sharvard · España' },

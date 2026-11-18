@@ -8,8 +8,9 @@ const FPS = 30;
 async function pickVideoCodec(w, h) {
   if (typeof VideoEncoder === 'undefined') return null;
   for (const codec of ['avc1.640028', 'avc1.4d0028', 'avc1.42e028', 'avc1.640032', 'avc1.42003e']) {
-    for (const hw of ['prefer-hardware', 'no-preference', 'prefer-software']) {
-      const cfg = { codec, width: w, height: h, bitrate: 8_000_000, framerate: FPS, hardwareAcceleration: hw, avc: { format: 'avc' } };
+    for (const hw of ['prefer-hardware', 'no-preference', 'prefer-software', null]) {
+      const cfg = { codec, width: w, height: h, bitrate: 8_000_000, framerate: FPS, avc: { format: 'avc' } };
+      if (hw) cfg.hardwareAcceleration = hw;
       try { const r = await VideoEncoder.isConfigSupported(cfg); if (r.supported) return cfg; } catch { /* sigue */ }
     }
   }
@@ -26,10 +27,11 @@ async function pickAudioCodec() {
 
 export async function canWebCodecs() { return !!(await pickVideoCodec(W, H)); }
 
-export async function exportMP4(project, mix, { onProgress, signal } = {}) {
+export async function exportMP4(project, mix, { onProgress, signal, audioContext } = {}) {
   const vcfg = await pickVideoCodec(W, H);
-  if (!vcfg) return exportRealtime(project, mix, { onProgress, signal });
-  const acodec = await pickAudioCodec();
+  const acodec = vcfg ? await pickAudioCodec() : null;
+  // Sin codificador de audio (p. ej. iPhone con iOS antiguo): grabación en tiempo real, que sí incluye el sonido.
+  if (!vcfg || !acodec) return exportRealtime(project, mix, { onProgress, signal, audioContext });
   const target = new ArrayBufferTarget();
   const muxer = new Muxer({
     target,
@@ -76,13 +78,14 @@ export async function exportMP4(project, mix, { onProgress, signal } = {}) {
 }
 
 // Respaldo en tiempo real
-async function exportRealtime(project, mix, { onProgress, signal }) {
+async function exportRealtime(project, mix, { onProgress, signal, audioContext }) {
   const types = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm'];
   const mime = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
   if (!mime) throw new Error('Este navegador no puede exportar video. Usa Chrome, Edge o Safari actualizados.');
   const canvas = Object.assign(document.createElement('canvas'), { width: W, height: H });
   const ctx = canvas.getContext('2d');
-  const ac = new AudioContext({ sampleRate: 48000 });
+  const ac = audioContext || new AudioContext({ sampleRate: 48000 });
+  if (ac.state !== 'running') await ac.resume();
   const dest = ac.createMediaStreamDestination();
   const src = ac.createBufferSource(); src.buffer = mix; src.connect(dest);
   const stream = new MediaStream([...canvas.captureStream(FPS).getVideoTracks(), ...dest.stream.getAudioTracks()]);
@@ -100,8 +103,8 @@ async function exportRealtime(project, mix, { onProgress, signal }) {
     };
     tick();
   });
-  rec.stop(); await done; src.stop(); ac.close();
+  rec.stop(); await done; src.stop(); if (!audioContext) ac.close();
   if (signal && signal.aborted) throw new DOMException('cancelado', 'AbortError');
   const ext = mime.includes('mp4') ? 'mp4' : 'webm';
-  return { blob: new Blob(chunks, { type: mime.split(';')[0] }), ext, note: ext === 'webm' ? 'webm' : '' };
+  return { blob: new Blob(chunks, { type: mime.split(';')[0] }), ext, note: ext === 'webm' ? 'webm' : 'realtime' };
 }

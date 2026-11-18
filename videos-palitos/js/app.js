@@ -24,7 +24,7 @@ const I18N = {
     stVoice: (i, n) => `Generando voz ${i}/${n}…`, stDl: (p) => `Descargando voz neural… ${p}`, stMix: 'Mezclando música y efectos…',
     stReady: (s, n) => `Listo: ${s.toFixed(1)} s · ${n} escenas. Revisa la vista previa y exporta.`, stFallback: 'No se pudo cargar la voz neural (¿sin internet?). Usando la voz básica sin conexión.',
     exporting: p => `Exportando… ${Math.round(p * 100)} %`, exported: 'Descargar video', exportErr: 'Error al exportar: ', webmNote: 'Tu navegador no graba MP4: se exportó en WebM. Para MP4 usa Chrome, Edge o Safari actualizados.',
-    meta: (s, n, sh) => `${s.toFixed(1)} s · ${n} escenas · ${sh} planos · 1080×1920`, linkMissing: 'Configura tu enlace abajo para usar este llamado.', noAudio: 'Aviso: este navegador no codifica audio; el MP4 salió sin sonido. Usa Chrome o Edge.', opusNote: 'MP4 listo (audio Opus). Si alguna red social no reconoce el sonido, exporta desde Chrome/Edge en Windows o Mac, o Safari: allí el audio sale en AAC.',
+    meta: (s, n, sh) => `${s.toFixed(1)} s · ${n} escenas · ${sh} planos · 1080×1920`, linkMissing: 'Configura tu enlace abajo para usar este llamado.', noAudio: 'Aviso: este navegador no codifica audio; el MP4 salió sin sonido. Usa Chrome o Edge.', keepOpen: 'Exportando: deja la pantalla encendida y no cambies de app hasta que termine.', savedHintIOS: 'Listo. Toca «Guardar en Fotos / Compartir» y elige «Guardar video».', share: 'Guardar en Fotos / Compartir', opusNote: 'MP4 listo (audio Opus). Si alguna red social no reconoce el sonido, exporta desde Chrome/Edge en Windows o Mac, o Safari: allí el audio sale en AAC.',
   },
   en: {
     title: 'Stick Video', subtitle: 'Short reflection videos with stick figures',
@@ -43,12 +43,13 @@ const I18N = {
     stVoice: (i, n) => `Generating voice ${i}/${n}…`, stDl: (p) => `Downloading neural voice… ${p}`, stMix: 'Mixing music and sound effects…',
     stReady: (s, n) => `Ready: ${s.toFixed(1)} s · ${n} scenes. Check the preview and export.`, stFallback: 'Could not load the neural voice (offline?). Using the basic offline voice.',
     exporting: p => `Exporting… ${Math.round(p * 100)}%`, exported: 'Download video', exportErr: 'Export error: ', webmNote: 'Your browser cannot record MP4, so it was exported as WebM. Use an up-to-date Chrome, Edge or Safari for MP4.',
-    meta: (s, n, sh) => `${s.toFixed(1)} s · ${n} scenes · ${sh} shots · 1080×1920`, linkMissing: 'Set up your link below to use this call to action.', noAudio: 'Note: this browser cannot encode audio; the MP4 has no sound. Use Chrome or Edge.', opusNote: 'MP4 ready (Opus audio). If a social network does not pick up the sound, export from Chrome/Edge on Windows or Mac, or Safari: there the audio is AAC.',
+    meta: (s, n, sh) => `${s.toFixed(1)} s · ${n} scenes · ${sh} shots · 1080×1920`, linkMissing: 'Set up your link below to use this call to action.', noAudio: 'Note: this browser cannot encode audio; the MP4 has no sound. Use Chrome or Edge.', keepOpen: 'Exporting: keep the screen on and stay in this app until it finishes.', savedHintIOS: 'Done. Tap "Save to Photos / Share" and choose "Save Video".', share: 'Save to Photos / Share', opusNote: 'MP4 ready (Opus audio). If a social network does not pick up the sound, export from Chrome/Edge on Windows or Mac, or Safari: there the audio is AAC.',
   },
 };
 
 // ---------- estado ----------
-const DEFAULTS = { lang: 'es', theme: 'amistad', nChars: 2, env: 'auto', color: true, dur: 'm', sit: 0, hookSeed: 1, ctaSeed: 1, hook: 0, cta: 0, page: '', linkUrl: '', linkLabel: '', engine: 'piper', voiceId: { es: 'es_MX-claude-high', en: 'en_US-hfc_female-medium' }, music: 'alegre', musicVol: 0.6, sfx: true };
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const DEFAULTS = { lang: 'es', theme: 'amistad', nChars: 2, env: 'auto', color: true, dur: 'm', sit: 0, hookSeed: 1, ctaSeed: 1, hook: 0, cta: 0, page: '', linkUrl: '', linkLabel: '', engine: 'piper', voiceId: { es: IOS ? 'es_MX-ald-medium' : 'es_MX-claude-high', en: 'en_US-hfc_female-medium' }, music: 'alegre', musicVol: 0.6, sfx: true };
 let S = { ...DEFAULTS };
 try { S = { ...DEFAULTS, ...JSON.parse(localStorage.getItem('munequitos-state') || '{}') }; } catch { /* sin almacenamiento */ }
 const save = () => { try { localStorage.setItem('munequitos-state', JSON.stringify(S)); } catch { /* ignorar */ } };
@@ -146,6 +147,7 @@ async function generate(customTexts = null) {
     renderScript();
     $('#emptyMsg').hidden = true; $('#player').hidden = false; $('#exportRow').hidden = false; $('#bigPlay').hidden = false; $('#dl').hidden = true;
     curTime = 0; drawAt(0);
+    if (window.matchMedia('(max-width: 900px)').matches) document.querySelector('.phone').scrollIntoView({ behavior: 'smooth', block: 'start' });
     setStatus(L.stReady(total, beats.length) + (engine === 'mespeak' && S.engine === 'piper' ? ' · ' + L.stFallback : ''));
     renderAll();
   } catch (e) {
@@ -164,12 +166,18 @@ $('#applyBtn').addEventListener('click', () => { const texts = [...document.quer
 // ---------- vista previa ----------
 const canvas = $('#preview'); const pctx = canvas.getContext('2d');
 let ac = null, src = null, t0 = 0, playing = false, curTime = 0, raf = 0;
+// iPhone: que suene aunque el interruptor de silencio esté activado, y activar el audio en el toque
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* no disponible */ }
+function unlockAudio() {
+  ac = ac || new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+  if (ac.state !== 'running') ac.resume();
+  return ac;
+}
 function drawAt(t) { if (!project) return; drawFrame(pctx, project, Math.min(t, project.total - 0.001), canvas.width / 1080); $('#seek').value = Math.round(t / project.total * 1000); $('#timeLbl').textContent = `${t.toFixed(1)} / ${project.total.toFixed(1)} s`; }
 function play() {
   if (!project || !mix) return;
   if (dirty) { /* las opciones cambiaron: se reproduce la versión generada */ }
-  ac = ac || new AudioContext({ sampleRate: 48000 });
-  ac.resume();
+  unlockAudio();
   if (curTime >= project.total - 0.05) curTime = 0;
   src = ac.createBufferSource(); src.buffer = mix; src.connect(ac.destination);
   t0 = ac.currentTime - curTime; src.start(0, curTime); playing = true;
@@ -184,24 +192,35 @@ canvas.addEventListener('click', () => { if (project) (playing ? stop() : play()
 $('#seek').addEventListener('input', e => { if (!project) return; const was = playing; stop(); curTime = e.target.value / 1000 * project.total; drawAt(curTime); if (was) play(); });
 
 // ---------- exportación ----------
-let abort = null;
+let abort = null, lastFile = null;
 $('#exportBtn').addEventListener('click', async () => {
   if (!project) return; const L = tr(); stop();
+  const actx = unlockAudio(); // en iPhone el audio debe activarse dentro del toque
   if (dirty) await generate(); if (!project) return;
   abort = new AbortController();
-  $('#exportBtn').disabled = true; $('#exportProg').hidden = false; $('#dl').hidden = true;
+  $('#exportBtn').disabled = true; $('#exportProg').hidden = false; $('#dl').hidden = true; $('#shareBtn').hidden = true;
+  if (IOS) setStatus(L.keepOpen);
   const bar = $('#exportProg div'), lbl = $('#exportProg span');
   try {
-    const { blob, ext, note } = await exportMP4(project, mix, { signal: abort.signal, onProgress: p => { bar.style.width = (p * 100).toFixed(1) + '%'; lbl.textContent = L.exporting(p); } });
+    const { blob, ext, note } = await exportMP4(project, mix, { audioContext: actx, signal: abort.signal, onProgress: p => { bar.style.width = (p * 100).toFixed(1) + '%'; lbl.textContent = L.exporting(p); } });
     const a = $('#dl'); if (a.href) URL.revokeObjectURL(a.href);
     a.href = URL.createObjectURL(blob);
     const sit = SITUATIONS[S.theme][S.sit];
-    a.download = `munequitos-${S.theme}-${sit.id}-${S.lang}.${ext}`;
+    const name = `munequitos-${S.theme}-${sit.id}-${S.lang}.${ext}`;
+    a.download = name;
     a.textContent = `⬇ ${L.exported} (${ext.toUpperCase()}, ${(blob.size / 1e6).toFixed(1)} MB)`; a.hidden = false;
+    lastFile = new File([blob], name, { type: blob.type || 'video/mp4' });
+    const canShare = !!(navigator.canShare && navigator.canShare({ files: [lastFile] }));
+    $('#shareBtn').hidden = !canShare;
+    setStatus(canShare && IOS ? L.savedHintIOS : '');
     if (note === 'webm') setStatus(L.webmNote, true); else if (note === 'sin-audio') setStatus(L.noAudio, true); else if (note === 'opus') setStatus(L.opusNote);
-    a.click();
+    if (!IOS) a.click();
   } catch (e) { if (e.name !== 'AbortError') { console.error(e); setStatus(L.exportErr + (e.message || e), true); } }
   finally { $('#exportBtn').disabled = false; $('#exportProg').hidden = true; abort = null; }
+});
+$('#shareBtn').addEventListener('click', async () => {
+  if (!lastFile) return;
+  try { await navigator.share({ files: [lastFile], title: lastFile.name }); } catch (e) { if (e.name !== 'AbortError') setStatus(String(e.message || e), true); }
 });
 $('#cancelBtn').addEventListener('click', () => abort && abort.abort());
 $('#srtBtn').addEventListener('click', () => {

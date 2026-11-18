@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Soler Template (Gemini)</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff4e3;--cd:#fff;--tx:#3a2314;--ac:#d9480f;--a2:#ffe1c2;--bd:#f0c18f;--on:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241610;--cd:#33201a;--tx:#fbeadb;--ac:#ff8a3d;--a2:#4a2e22;--bd:#6b4533;--on:#2a1308}}
+:root[data-theme="dark"]{--bg:#241610;--cd:#33201a;--tx:#fbeadb;--ac:#ff8a3d;--a2:#4a2e22;--bd:#6b4533;--on:#2a1308}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:18px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:0 0 40px}
+header{padding:14px 14px 4px}h1{margin:0;font-size:26px}h3{margin:0 0 8px;font-size:20px}
+#hi{margin:4px 0 10px}
+#lg{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+nav{display:flex;gap:8px;overflow-x:auto;padding:8px 14px}
+button{font:inherit;border:2px solid var(--ac);background:var(--cd);color:var(--tx);border-radius:14px;padding:10px 14px;cursor:pointer}
+button.on,button.big{background:var(--ac);color:var(--on);font-weight:700}
+button.big{width:100%;padding:16px;font-size:20px;margin:8px 0}
+button.sm{padding:6px 10px;font-size:15px;flex:none}
+button:disabled{opacity:.45}
+nav button{white-space:nowrap}
+main{padding:0 14px}
+.card{background:var(--cd);border:2px solid var(--bd);border-radius:18px;padding:14px;margin:12px 0}
+.mut{opacity:.75;font-size:15px;margin:4px 0}
+.th{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.th img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:2px solid var(--bd)}
+.cp{display:flex;gap:8px;align-items:center;justify-content:space-between;background:var(--a2);border-radius:12px;padding:8px 10px;margin:6px 0;word-break:break-word}
+.out{white-space:pre-wrap;word-break:break-word;margin:8px 0}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--cd);border:2px solid var(--bd);border-radius:12px;padding:10px;width:100%;margin:4px 0}
+input[type=color]{height:46px;padding:2px}input[type=checkbox]{width:24px;height:24px;margin:0 8px 0 0;flex:none}
+label.ck{display:flex;align-items:center;margin:8px 0}
+textarea{min-height:90px}
+.chk{background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0 0/20px 20px;border-radius:12px;display:inline-block}
+.chk img{max-width:160px;display:block}
+.t2{font-size:44px;font-weight:800;text-align:center}
+.pr{font-weight:700;color:var(--ac)}
+#to{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));background:var(--ac);color:var(--on);padding:12px;border-radius:14px;font-weight:700;text-align:center;display:none;z-index:5}
+details{margin:8px 0}summary{font-weight:700;cursor:pointer}
+a{color:var(--ac)}
+</style></head><body>
+<header><h1>🎬 Soler Template</h1><p id="hi">¡Dale, Rene! Vamos paso a paso con la plantilla de hoy.</p><div id="lg"></div><div id="kp"></div></header>
+<nav id="nv"></nav><main id="mn"></main><div id="to"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+function E(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+function btn(t,f,c){const b=E('button',c||'',t);b.onclick=f;return b}
+const st={g(k,d){try{const v=localStorage.getItem('st_'+k);return v?JSON.parse(v):d}catch(e){return d}},s(k,v){try{localStorage.setItem('st_'+k,JSON.stringify(v))}catch(e){}}};
+let lang=st.g('lang','Inglés'),S=null,last=st.g('last',null);
+const b64=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=()=>no(new Error('No se pudo leer la imagen'));r.readAsDataURL(b)});
+async function G(p,o){o=o||{};const k=(st.g('gk','')||'').trim(),md=(st.g('gm','')||'gemini-3.5-flash').trim();
+ if(!k)throw{code:'not_granted',message:'Falta la clave de Gemini. Ábrela arriba en “🔑 Clave de Gemini” y pégala.'};
+ const parts=[{text:p}];for(const b of (o.images||[]))parts.push({inline_data:{mime_type:b.type||'image/jpeg',data:await b64(b)}});
+ const body={contents:[{parts}]};if(o.json)body.generationConfig={responseMimeType:'application/json'};
+ let r,j;try{r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+md+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':k},body:JSON.stringify(body)});j=await r.json()}catch(e){throw{code:'net',message:'No hay conexión con Gemini. Revisa tu internet.'}}
+ if(!r.ok)throw{code:'api',status:r.status,message:((j.error&&j.error.message)||'Error')+' (código '+r.status+')'};
+ const t=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(x=>x.text||'').join('');
+ if(!t)throw{code:'empty',message:'Gemini no devolvió texto. Prueba otra vez.'};return {text:t}}
+G.json=async(p,o)=>{const t=(await G(p,Object.assign({},o,{json:true}))).text;try{return JSON.parse(t)}catch(e){const m=t.match(/[\[{][\s\S]*[\]}]/);if(m)try{return JSON.parse(m[0])}catch(_){}throw{code:'invalid_json',message:'Gemini no devolvió datos legibles. Prueba otra vez.'}}};
+S=G;
+function kp(){const d=$('#kp'),w=E('details');w.append(E('summary','','🔑 Clave de Gemini'));const k=E('input'),m=E('input');k.type='password';k.placeholder='Pega aquí tu clave (empieza por AIza)';k.value=st.g('gk','');m.placeholder='Modelo';m.value=st.g('gm','')||'gemini-3.5-flash';
+ w.append(k,m,btn('Guardar',()=>{st.s('gk',k.value.trim());st.s('gm',m.value.trim());toast('Guardado en este teléfono')},'sm'),E('p','mut','La clave se queda solo en tu navegador. No la compartas.'));if(!st.g('gk',''))w.open=true;d.append(w)}
+function toast(m){const t=$('#to');t.textContent=m;t.style.display='block';clearTimeout(toast.k);toast.k=setTimeout(()=>t.style.display='none',3500);try{navigator.vibrate&&navigator.vibrate(200)}catch(e){}}
+async function copy(t,b){try{await navigator.clipboard.writeText(t)}catch(e){const a=E('textarea');a.value=t;document.body.append(a);a.select();try{document.execCommand('copy')}catch(_){}a.remove()}if(b){const o=b.textContent;b.textContent='¡Copiado!';setTimeout(()=>b.textContent=o,1200)}}
+function cp(t,n){const d=E('div','cp');d.append(E('span','',n?t+'  ('+t.length+' car.)':t));d.append(btn('Copiar',function(){copy(t,this)},'sm'));return d}
+async function dl(name,data){try{const b=data instanceof Blob?data:new Blob([data]),u=URL.createObjectURL(b),a=E('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),8000)}catch(e){toast('No se guardó el archivo.')}}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function errTxt(e){return e&&e.message?e.message:'Error: '+e}
+async function retry(fn,say){for(let i=0;;i++){try{if(!S)throw{code:'not_granted',message:'La IA no está disponible. Abre la app desde tu cuenta de Claude.'};return await fn()}catch(e){if(e&&(e.code==='not_granted'||e.code==='cancelled'||[400,401,403,404].includes(e.status))||i>=3)throw e;say('Reintentando ('+(i+1)+' de 3)...');await wait(2500)}}}
+const R=()=>'Reglas: nunca inventes datos; si algo no se lee o no lo sabes, dilo claro. Instrucciones en español sencillo y cercano. Toda palabra o sigla en inglés lleva su significado en español entre paréntesis. Lo que se publica va en '+lang+'. Si algo de CapCut pudo cambiar, márcalo como cosa a comprobar. No prometas ganancias ni viralidad.';
+async function ask(out,p){out.textContent='Pensando...';try{const r=await retry(()=>S(p,{cache:false,onText:({text})=>{out.textContent=text}}),m=>out.textContent=m);out.textContent=r.text;if(!out.nextSibling||out.nextSibling.className!=='cp')out.after(cp(r.text.slice(0,4000)));}catch(e){out.textContent=errTxt(e)}}
+const SUF='100% realista, sin distorsiones, sin objetos flotando, manos y rostros normales, sin texto inventado, sin logos, movimiento natural. Revisa cada resultado.';
+const cv=(w,h)=>{const c=E('canvas');c.width=w;c.height=h;return c};
+const pngB=c=>new Promise(r=>c.toBlob(r,'image/png'));
+const ZZ=1080;
+async function mkFondo(a,b){const c=cv(1080,1920),x=c.getContext('2d'),g=x.createLinearGradient(0,0,0,1920);g.addColorStop(0,a);g.addColorStop(1,b);x.fillStyle=g;x.fillRect(0,0,1080,1920);return pngB(c)}
+async function mkMarco(col,w,sty){const c=cv(ZZ,ZZ),x=c.getContext('2d');x.fillStyle=col;
+ const ring=(o,i,r1,r2)=>{x.beginPath();x.roundRect(o,o,ZZ-2*o,ZZ-2*o,r1);x.roundRect(i,i,ZZ-2*i,ZZ-2*i,r2);x.fill('evenodd')};
+ if(sty==='polaroid'){x.beginPath();x.rect(0,0,ZZ,ZZ);x.rect(w,w,ZZ-2*w,ZZ-2*w-w*1.4);x.fill('evenodd')}
+ else if(sty==='doble'){ring(0,w*.45,0,0);ring(w*.8,w*1.25,0,0)}
+ else ring(0,w,70,Math.max(0,70-w/2));
+ return pngB(c)}
+async function mkSt(g){const c=cv(1024,1024),x=c.getContext('2d');x.font='760px serif';x.textAlign='center';x.textBaseline='middle';x.fillText(g,512,560);return pngB(c)}
+const sheet=d=>{const j=a=>(a||[]).map(x=>'- '+x).join('\n');return 'SOLER TEMPLATE\nIdioma: '+lang+'\n\nRESUMEN: '+(d.resumen||'')+'\nDías restantes: '+(d.dias_restantes||'?')+'\nDuración: '+(d.duracion||'')+'\n\nHASHTAGS (exactos):\n'+(d.hashtags||[]).join(' ')+'\n\nTÍTULOS:\n'+j(d.titulos)+'\n\nDESCRIPCIONES:\n'+j(d.descripciones)+'\n\nTEXTO ARRIBA:\n'+j(d.texto_arriba)+'\n\nTEXTO ABAJO:\n'+j(d.texto_abajo)+'\n\nPASOS EN CAPCUT:\n'+(d.pasos||[]).map((x,i)=>(i+1)+'. '+x).join('\n')+'\n\nTRANSICIONES (comprobar nombres):\n'+j(d.transiciones)+'\n\nEFECTOS:\n'+j(d.efectos)+'\n\nESTILOS DE TEXTO:\n'+j(d.estilos_texto)+'\n\nMÚSICA: '+(d.musica||'')+'\n\nREQUISITOS:\n'+j(d.requisitos)+'\n\nCapas: fondo atrás, marcos en medio, texto arriba.\n'};
+async function zip(d){if(!window.JSZip)throw new Error('No cargó el programa de ZIP.');const z=new JSZip();z.file('01-fondo.png',await mkFondo('#ff9a3c','#d9480f'));z.file('02-marco.png',await mkMarco('#ffffff',60,'polaroid'));z.file('03-sticker.png',await mkSt('❤️'));z.file('04-hoja.txt',sheet(d));return z.generateAsync({type:'blob'})}
+const rd=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(new Error('No se pudo leer una imagen'));r.readAsDataURL(f)});
+const du2b=u=>{const a=u.split(','),m=a[0].match(/:(.*?);/)[1],bs=atob(a[1]),u8=new Uint8Array(bs.length);for(let i=0;i<bs.length;i++)u8[i]=bs.charCodeAt(i);return new Blob([u8],{type:m})};
+async function shrink(f){const src=await rd(f);
+ try{const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(0);i.src=src}),W=im.naturalWidth||im.width,H=im.naturalHeight||im.height,k=Math.min(1,2000/Math.max(W,H)),c=cv(Math.round(W*k),Math.round(H*k));
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);const u=c.toDataURL('image/jpeg',.92);
+  if(u.length>200)return{blob:du2b(u),url:u}}catch(e){}
+ return{blob:f,url:src}}
+const L=a=>(Array.isArray(a)?a:a?[a]:[]).map(x=>typeof x==='string'?x:JSON.stringify(x));
+function sec(t,...k){const s=E('section','card');s.append(E('h3','',t));k.forEach(x=>x&&s.append(x));return s}
+const cps=(a,n)=>{const d=E('div');L(a).forEach(x=>d.append(cp(x,n)));return d};
+const lis=a=>{const u=E('ul');L(a).forEach(x=>u.append(E('li','',x)));return u};
+function timer(){const w=E('div'),t=E('div','t2','20:00'),inf=E('p','mut','');let left=1200,iv=null;
+ const f=()=>{const m=Math.floor(left/60),s=left%60;t.textContent=m+':'+String(s).padStart(2,'0')};
+ const stop=()=>{clearInterval(iv);iv=null};
+ const go=btn('Empezar',()=>{if(iv){stop();go.textContent='Seguir';return}go.textContent='Pausa';iv=setInterval(()=>{left--;f();if(left===600)toast('Van 10 minutos. ¡Dale!');if(left===120)toast('Quedan 2 minutos.');if(left===30)toast('Quedan 30 segundos.');if(left<=0){stop();fin()}},1000)},'big');
+ const fin=()=>{stop();const sec=1200-left,a=st.g('retos',[]);a.push({seg:sec,dia:new Date().toISOString().slice(0,10)});st.s('retos',a);inf.textContent='Guardado: tardaste '+Math.floor(sec/60)+' min '+sec%60+' s.'};
+ w.append(t,go,btn('Terminé',fin),inf);return w}
+function show(d,res){res.textContent='';const al=[];
+ const sv=st.g('plant',[]),txt=JSON.stringify(d.temas||'')+(d.resumen||'');sv.forEach(p=>{if(p.tema&&txt.toLowerCase().includes(p.tema.toLowerCase()))al.push('Ojo: tu plantilla guardada “'+p.tema+'” puede encajar con esta tarea.')});
+ if(d.faltan)al.push('Falta por leer: '+d.faltan+'. Sube otra captura si hace falta.');
+ al.forEach(a=>res.append(sec('Aviso',E('p','',a))));
+ res.append(sec('Resumen rápido',E('p','',(d.resumen||'')+(d.dias_restantes?'  ⏳ Días restantes: '+d.dias_restantes:'')),E('p','mut','Duración sugerida: '+(d.duracion||'10 a 20 segundos (mínimo 10)'))));
+ res.append(sec('Hashtags exactos',(()=>{const h=L(d.hashtags);const w=E('div');if(h.length){w.append(cp(h.join(' ')));h.forEach(x=>w.append(cp(x)))}return w})()));
+ res.append(sec('3 títulos',cps(d.titulos)),sec('3 descripciones (menos de 20 caracteres)',cps(d.descripciones,1)),sec('Texto para arriba',cps(d.texto_arriba)),sec('Texto para abajo',cps(d.texto_abajo)));
+ res.append(sec('Temas e ideas de POV (punto de vista)',lis(d.temas),lis(d.povs)),sec('Música de la tarea',E('p','',d.musica||'No se leyó música.')),sec('Consejos pro',lis(d.consejos)),sec('Requisitos',lis(d.requisitos)),sec('Ejemplos y usos',lis(d.ejemplos)));
+ const ps=E('div');L(d.pasos).forEach(p=>{const l=E('label','ck');const c=E('input');c.type='checkbox';l.append(c,E('span','',p.slice(0,50)));ps.append(l)});
+ res.append(sec('Pasos en CapCut',ps));
+ res.append(sec('Nombres para buscar en CapCut',E('p','mut','Los nombres cambian: compruébalos en tu app.'),E('b','','Transiciones'),cps(d.transiciones),E('b','','Efectos'),cps(d.efectos),E('b','','Estilos de texto'),cps(d.estilos_texto)));
+ res.append(sec('Reto de 20 minutos (opcional)',timer()));
+ const z=btn('Descargar paquete (ZIP)',async function(){this.disabled=true;try{await dl('soler-template.zip',await zip(d))}catch(e){toast(errTxt(e))}this.disabled=false},'big');
+ res.append(sec('Paquete',z,E('p','mut','Trae PNG y una hoja con todo. No se envía directo a CapCut: lo importas tú.')))}
+const T={};
+T['Analizar']=m=>{let files=[];
+ const inp=E('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.hidden=true;
+ const th=E('div','th'),cnt=E('p','mut'),pr=E('p','pr'),res=E('div');
+ const go=btn('Analizar',run,'big');
+ function draw(){th.textContent='';files.forEach((f,i)=>{const im=E('img');im.src=f.url;im.title='Tocar para quitar';im.onclick=()=>{URL.revokeObjectURL(f.url);files.splice(i,1);draw()};th.append(im)});cnt.textContent=files.length+' de 16';go.disabled=!files.length}
+ inp.onchange=async()=>{const a=[...inp.files].slice(0,16-files.length);inp.value='';pr.textContent='Preparando capturas...';for(const f of a){try{files.push(await shrink(f))}catch(e){toast(e.message)}}pr.textContent='';draw()};
+ async function run(){go.disabled=true;res.textContent='';try{let tx='';
+  for(let i=0;i<files.length;i+=4){const g=files.slice(i,i+4),a=i+1,b=i+g.length;pr.textContent='Leyendo capturas '+a+' a '+b+' de '+files.length+'...';
+   const t=await retry(async()=>(await S('Estas '+g.length+' imágenes son las capturas '+a+' a '+b+' de una tarea de plantillas de CapCut, en orden. Transcribe con mucho cuidado TODO el texto de cada una: títulos, reglas, hashtags exactos, fechas, recompensa, requisitos, música, ejemplos y usos. Marca [ilegible] lo que no se lea y di de qué captura es. No inventes nada.',{images:g.map(x=>x.blob),cache:false})).text,x=>pr.textContent=x);
+   tx+='\n=== CAPTURAS '+a+' A '+b+' ===\n'+t}
+  pr.textContent='Analizando todo junto...';
+  const d=await retry(()=>S.json(R()+'\nCon esta transcripción de una tarea de plantillas de CapCut, responde SOLO con un objeto JSON con estas claves: dias_restantes (texto o null), resumen, hashtags (exactos, sin traducir), titulos (3), descripciones (3, cada una de menos de 20 caracteres, con palabras de tendencia), texto_arriba (3), texto_abajo (3), duracion (la de la tarea, o 10 a 20 segundos con mínimo 10), temas, povs, musica (la de la tarea, o vacío), consejos, requisitos, ejemplos (cada uno con su uso), pasos (máximo 50 caracteres cada uno, con verbo: elegir clips, fondo 9 por 16, música, cortar en el golpe fuerte, filtro, marco 1 por 1, máscara cuadrada a cada clip, zoom lento con 2 keyframes por foto, transiciones, efectos, texto, revisar requisitos, publicar), transiciones (2 o 3 nombres), efectos (2 o 3 nombres), estilos_texto (2 o 3 nombres), faltan (qué no se leyó y qué captura repetir, o vacío). La recompensa es opcional y un extra.\n\nTRANSCRIPCIÓN:\n'+tx,{cache:false,modelTier:'default'}),x=>pr.textContent=x);
+  pr.textContent='';last=d;st.s('last',d);show(d,res)}catch(e){pr.textContent=errTxt(e)}go.disabled=!files.length}
+ m.append(btn('Elegir capturas de mi fototeca',()=>inp.click(),'big'),inp,th,cnt,go,pr,res);draw();
+ if(last)m.append(btn('Ver el último análisis',()=>show(last,res)))};
+const EV=[['Navidad','12-25','árboles, luces, regalos'],['Año Nuevo','01-01','cuenta regresiva, brillos'],['San Valentín','02-14','corazones, parejas'],['Día de las Madres','05-10','flores, abrazos'],['Día del Padre','06-21','herramientas, abrazos'],['Día de los Niños','04-30','juegos, globos'],['Día de Muertos','11-02','velas, flores naranja'],['Halloween','10-31','calabazas, luces'],['Black Friday','11-27','ofertas, bolsas'],['Cumpleaños','','todo el año: globos, velas']];
+T['Fechas']=m=>{const fx=st.g('fechas',{}),c=E('input');c.placeholder='País (para recordar tus fechas)';c.value=fx._p||'';c.onchange=()=>{fx._p=c.value;st.s('fechas',fx)};
+ m.append(sec('Fechas clave',E('p','mut','Cambia la fecha según tu país. Empieza 4 a 6 semanas antes.'),c));
+ EV.forEach(([n,d,i])=>{const v=fx[n]||d,k=E('input');k.type='text';k.value=v;k.placeholder='MM-DD';let msg='';
+  if(v){const [mm,dd]=v.split('-').map(Number),now=new Date(),t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());let t=new Date(now.getFullYear(),mm-1,dd);if(t<t0)t=new Date(now.getFullYear()+1,mm-1,dd);const days=Math.round((t-t0)/864e5);msg=days+' días ('+Math.round(days/7)+' semanas)'+(days<=42&&days>=0?' ⚠️ ¡Ya toca preparar!':'')}
+  const mm=E('p','mut',msg);k.onchange=()=>{fx[n]=k.value;st.s('fechas',fx);page()};
+  m.append(sec(n,E('p','mut','Idea: '+i),k,mm))})};
+T['Stickers y marcos']=m=>{const col=E('input'),w=E('input'),sty=E('select'),pv=E('img'),box=E('div','chk');col.type='color';col.value='#ffffff';w.type='range';w.min=20;w.max=140;w.value=60;['polaroid','doble','redondeado'].forEach(x=>sty.append(E('option','',x)));box.append(pv);
+ const up=async()=>{pv.src=URL.createObjectURL(await mkMarco(col.value,+w.value,sty.value))};[col,w,sty].forEach(x=>x.oninput=up);up();
+ m.append(sec('Marco cuadrado 1 por 1',E('p','mut','Centro transparente. Color, grosor y estilo a tu gusto.'),col,w,sty,box,btn('Descargar marco PNG',async()=>dl('02-marco.png',await mkMarco(col.value,+w.value,sty.value)),'big')));
+ const a=E('input'),b=E('input');a.type=b.type='color';a.value='#ff9a3c';b.value='#d9480f';
+ m.append(sec('Fondo 9 por 16',E('p','mut','Liso o degradado (2 colores iguales = liso).'),a,b,btn('Descargar fondo PNG',async()=>dl('01-fondo.png',await mkFondo(a.value,b.value)),'big')));
+ const g=E('select');['❤️','⭐','🐾','❄️'].forEach(x=>g.append(E('option','',x)));
+ m.append(sec('Sticker PNG transparente',E('p','mut','Algunas IA no dan fondo realmente transparente; este sí.'),g,btn('Descargar sticker PNG',async()=>dl('03-sticker.png',await mkSt(g.value)),'big')));
+ const ti=E('input');ti.placeholder='Tema o escena (ej. atardecer en la playa)';const out=E('div');
+ ti.oninput=()=>{out.textContent='';if(ti.value)out.append(cp('Escena: '+ti.value+'. Cámara: movimiento lento y suave. Estilo: cálido y limpio. Duración: 5 a 8 segundos, siempre vertical 9 por 16, sin caras reconocibles, matrículas ni carteles. '+SUF))};
+ m.append(sec('Prompt para clips con IA',E('p','mut','Para Google Flow, Meta AI, Gemini o ChatGPT.'),ti,out),sec('Capas',E('p','','Fondo atrás, marcos en medio, texto arriba.')),
+  sec('Clips gratis',(()=>{const d=E('div');[['Pexels','https://www.pexels.com/videos/'],['Pixabay','https://pixabay.com/videos/']].forEach(([n,u])=>{const l=E('a','',n);l.href=u;l.target='_blank';l.rel='noopener';d.append(l,E('br'))});d.append(E('p','mut','Revisa la licencia de cada clip.'));return d})()))};
+T['Música']=m=>{const l=(n,u)=>{const a=E('a','',n);a.href=u;a.target='_blank';a.rel='noopener';return a};
+ m.append(sec('Primero, la música de la tarea',E('p','','Usa la que pida la tarea. Si no pide ninguna, en CapCut Sounds filtra por gratis y uso comercial.')),
+  sec('Bibliotecas',l('Biblioteca de Audio de YouTube','https://studio.youtube.com/channel/UC/music'),E('br'),l('Free Music Archive','https://freemusicarchive.org'),E('br'),l('Jamendo','https://www.jamendo.com'),E('p','mut','Revisa siempre la licencia. Una canción importada podría no calificar para la tarea.')),
+  sec('Ojo',E('p','','Las canciones famosas de TikTok suelen tener derechos de autor. Esta app no inventa canciones ni tendencias.')))};
+const REQ=['Plantilla Pro con monetización activada','Tema alineado con la tarea','Más de 400 reproducciones en TikTok','Clips y música libres de derechos','Sin anime, juegos, películas ni celebridades','Contenido original','Enfoque en habla inglesa','Revisión final: tema, hashtags exactos, título y descripción válidos, permisos'];
+T['Requisitos']=m=>{const v=st.g('req',{}),s=E('section','card');s.append(E('h3','','Checklist'));REQ.forEach((r,i)=>{const l=E('label','ck'),c=E('input');c.type='checkbox';c.checked=!!v[i];c.onchange=()=>{v[i]=c.checked;st.s('req',v)};l.append(c,E('span','',r));s.append(l)});m.append(s)};
+T['Mis plantillas']=m=>{const a=st.g('plant',[]),f=E('select'),lst=E('div');['Todas','Inglés','Español'].forEach(x=>f.append(E('option','',x)));
+ const F={};['tema','idioma','fecha','usos','ventas','minutos'].forEach(k=>{const i=E('input');i.placeholder=k[0].toUpperCase()+k.slice(1);if(k==='usos'||k==='ventas'||k==='minutos')i.type='number';F[k]=i});
+ const draw=()=>{lst.textContent='';a.forEach((p,i)=>{if(f.value!=='Todas'&&p.idioma!==f.value)return;const o=E('div');
+  const gen=btn('Versión en el otro idioma',()=>{const t=p.idioma==='Inglés'?'Español':'Inglés';ask(out,R()+'\nHaz la versión en '+t+' (título, descripción de menos de 20 caracteres, texto arriba y abajo) de una plantilla sobre: '+p.tema+'. No traduzcas hashtags de tareas.')},'sm'),out=E('div','out');
+  o.append(sec(p.tema,E('p','mut',[p.idioma,p.fecha,'usos '+(p.usos||0),'ventas '+(p.ventas||0),(p.minutos||0)+' min'].join(' · ')),gen,btn('Borrar',()=>{a.splice(i,1);st.s('plant',a);draw()},'sm'),out));lst.append(o)})};
+ f.onchange=draw;
+ const add=btn('Guardar plantilla',()=>{if(!F.tema.value)return toast('Pon el tema.');a.push(Object.fromEntries(Object.entries(F).map(([k,i])=>[k,i.value])));Object.values(F).forEach(i=>i.value='');st.s('plant',a);draw()},'big');
+ m.append(sec('Nueva plantilla',...Object.values(F),add),E('p','mut','Filtrar por idioma:'),f,lst);draw()};
+T['Estrategia']=m=>{const out=E('div','out');
+ m.append(sec('Qué hacer primero',E('p','mut','Solo veo lo que subes aquí. No garantizo que algo se vuelva viral; el dinero principal viene de las ventas.'),btn('Sugerir plantillas',()=>ask(out,R()+'\nSugiere qué plantillas hacer primero, con razón, idioma y fecha límite. Datos reales: mis plantillas='+JSON.stringify(st.g('plant',[]))+'; fechas='+JSON.stringify(st.g('fechas',{}))+'; hoy='+new Date().toISOString().slice(0,10)+'; último análisis de capturas='+JSON.stringify(last||{})+'. Prioriza por fechas, temas repetidos, ventas y ejemplos. Si faltan datos, dilo.'),'big'),out))};
+T['Mis tutoriales']=m=>{const t=E('input'),d=E('select'),o=E('div','out');t.placeholder='Plantilla o tema';['Inglés','Español'].forEach(x=>d.append(E('option','',x)));const du=E('input');du.placeholder='Duración (ej. 60 segundos)';
+ m.append(sec('Borrador de tutorial',t,d,du,btn('Armar borrador',()=>ask(o,R()+'\nArma un borrador de tutorial en '+d.value+', duración '+(du.value||'60 segundos')+', sobre: '+(t.value||'mi plantilla')+'. Incluye: título, gancho, guion paso a paso, tomas a grabar, términos explicados, errores comunes, cierre y hashtags.'),'big'),o))};
+T['Tutorial']=m=>{const D=(t,h)=>{const d=E('details');d.append(E('summary','',t),E('p','',h));return d},o=E('div','out'),q=E('textarea');q.placeholder='Escribe tu duda';
+ const c=E('section','card');c.append(E('h3','','Guía rápida'),D('Cómo usar la app','1) En Analizar sube las capturas de la tarea. 2) Revisa el resultado. 3) Sigue los pasos en CapCut. 4) Descarga el paquete.'),D('Método Soler Template','Fondo atrás, marco en medio, texto arriba; clips cortados en el golpe fuerte; zoom lento; revisar requisitos antes de publicar.'),D('Glosario','POV (punto de vista). Keyframe (fotograma clave). GMV (valor total de ventas). Mask (máscara). Template (plantilla). Hashtag (etiqueta).'),D('Cómo evitar rechazos','Hashtags exactos, música libre de derechos, sin anime, juegos, películas ni celebridades, contenido original y requisitos al día.'),D('Preguntas frecuentes','¿Se manda directo a CapCut? No: descargas y lo importas tú. ¿La recompensa de la tarea? Es un extra.'));
+ m.append(c,sec('Escribe tu duda',q,btn('Preguntar',()=>q.value&&ask(o,R()+'\nResponde sencillo y admite si no estás seguro. Duda: '+q.value),'big'),o))};
+const TABS=['Analizar','Fechas','Stickers y marcos','Música','Requisitos','Mis plantillas','Estrategia','Mis tutoriales','Tutorial'];let cur=0;
+function nav(){const n=$('#nv');n.textContent='';TABS.forEach((t,i)=>n.append(btn(t,()=>{cur=i;nav();page()},i==cur?'on':'')))}
+function page(){const m=$('#mn');m.textContent='';T[TABS[cur]](m)}
+function lg(){const d=$('#lg');d.textContent='';d.append(E('b','','Idioma de la plantilla:'));['Inglés','Español'].forEach(l=>d.append(btn(l,()=>{lang=l;st.s('lang',l);lg()},l==lang?'on':'')))}
+lg();kp();nav();page();
+</script></body></html>

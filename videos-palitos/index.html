@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Muñequitos Video</title>
+<meta name="description" content="Genera videos cortos verticales de muñequitos de palitos con voz, música, subtítulos y exportación MP4.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='14' r='10' fill='white' stroke='black' stroke-width='4'/><path d='M32 24v20M32 30l-14 8M32 30l14-6M32 44l-10 16M32 44l10 16' stroke='black' stroke-width='4' stroke-linecap='round'/></svg>">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="14" r="10" fill="none" stroke="currentColor" stroke-width="4"/><path d="M32 24v20M32 30l-14 8M32 30l14-6M32 44l-10 16M32 44l10 16" stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"/></svg>
+    <div>
+      <h1 data-i18n="title">Muñequitos Video</h1>
+      <p class="sub" data-i18n="subtitle">Videos cortos de reflexión con muñequitos de palitos</p>
+    </div>
+  </div>
+  <button id="langBtn" class="lang" type="button" aria-label="Cambiar idioma"><span class="on">ES</span><span>EN</span></button>
+</header>
+
+<main class="layout">
+  <section class="controls">
+    <div class="card">
+      <h2><span class="n">1</span><span data-i18n="s1">Tema</span></h2>
+      <div id="themes" class="chips"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">2</span><span data-i18n="s2">Personajes, entorno y estilo</span></h2>
+      <div class="row">
+        <div class="field">
+          <label data-i18n="chars">Personajes</label>
+          <div id="nchars" class="seg"></div>
+        </div>
+        <div class="field">
+          <label data-i18n="style">Estilo</label>
+          <div id="colorSeg" class="seg"></div>
+        </div>
+      </div>
+      <label class="lbl" data-i18n="env">Entorno</label>
+      <div id="envs" class="chips small"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">3</span><span data-i18n="s3">Duración</span></h2>
+      <div id="durs" class="seg big"></div>
+      <p class="hint" data-i18n="durHint">La app ajusta el ritmo y la cantidad de escenas al rango elegido.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">4</span><span data-i18n="s4">Situación cotidiana</span></h2>
+      <div id="sits" class="options"></div>
+    </div>
+
+    <div class="card">
+      <div class="h2row"><h2><span class="n">5</span><span data-i18n="s5">Gancho inicial</span></h2><button id="moreHooks" class="ghost" type="button" data-i18n="other">Otras opciones</button></div>
+      <div id="hooks" class="options"></div>
+    </div>
+
+    <div class="card">
+      <div class="h2row"><h2><span class="n">6</span><span data-i18n="s6">Llamado a la acción</span></h2><button id="moreCtas" class="ghost" type="button" data-i18n="other">Otras opciones</button></div>
+      <div id="ctas" class="options"></div>
+      <details class="cfg">
+        <summary data-i18n="ctaCfg">Configurar página y enlace</summary>
+        <label class="lbl" for="page" data-i18n="pageName">Nombre de tu página (aparece en el video)</label>
+        <input id="page" type="text" placeholder="@mipagina" maxlength="40">
+        <label class="lbl" for="linkUrl" data-i18n="linkUrl">Enlace (URL)</label>
+        <input id="linkUrl" type="url" placeholder="https://..." maxlength="200">
+        <label class="lbl" for="linkLabel" data-i18n="linkLabel">Texto del botón del enlace</label>
+        <input id="linkLabel" type="text" placeholder="miweb.com/curso" maxlength="40">
+      </details>
+    </div>
+
+    <div class="card">
+      <h2><span class="n">7</span><span data-i18n="s7">Voz, música y efectos</span></h2>
+      <label class="lbl" for="voice" data-i18n="voice">Voz automática</label>
+      <select id="voice"></select>
+      <p class="hint" id="voiceHint" data-i18n="voiceHint">La voz neural se descarga una sola vez (≈60 MB) y queda guardada en el navegador.</p>
+      <div class="row">
+        <div class="field grow">
+          <label class="lbl" for="music" data-i18n="music">Música</label>
+          <select id="music"></select>
+        </div>
+        <div class="field grow">
+          <label class="lbl" for="musicVol" data-i18n="musicVol">Volumen música</label>
+          <input id="musicVol" type="range" min="0" max="1" step="0.05" value="0.6">
+        </div>
+      </div>
+      <label class="check"><input id="sfx" type="checkbox" checked> <span data-i18n="sfx">Efectos de sonido</span></label>
+    </div>
+
+    <button id="genBtn" class="primary" type="button" data-i18n="generate">Generar vista previa</button>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="previewCol">
+    <div class="card sticky">
+      <div class="phone">
+        <canvas id="preview" width="540" height="960" aria-label="Vista previa del video"></canvas>
+        <div id="emptyMsg" class="empty" data-i18n="empty">Elige tus opciones y pulsa «Generar vista previa».</div>
+        <button id="bigPlay" class="bigPlay" type="button" aria-label="Reproducir" hidden>▶</button>
+      </div>
+      <div class="player" id="player" hidden>
+        <button id="playBtn" class="round" type="button" aria-label="Reproducir/pausar">▶</button>
+        <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Posición">
+        <span id="timeLbl" class="time">0.0 s</span>
+      </div>
+      <div id="meta" class="meta"></div>
+      <div class="exportRow" id="exportRow" hidden>
+        <button id="exportBtn" class="primary" type="button" data-i18n="export">Exportar MP4</button>
+        <button id="srtBtn" class="ghost" type="button" data-i18n="srt">Subtítulos .srt</button>
+      </div>
+      <div id="exportProg" class="prog" hidden><div></div><span></span><button id="cancelBtn" type="button" class="ghost sm" data-i18n="cancel">Cancelar</button></div>
+      <a id="dl" class="download" hidden></a>
+    </div>
+
+    <div class="card" id="scriptCard" hidden>
+      <div class="h2row"><h2 data-i18n="script">Guion (puedes editarlo)</h2><button id="applyBtn" class="ghost" type="button" data-i18n="apply">Aplicar cambios</button></div>
+      <ol id="scriptList" class="script"></ol>
+    </div>
+  </section>
+</main>
+<footer class="foot" data-i18n="foot">Todo se genera en tu navegador. Formato vertical 1080×1920 para Shorts, Reels y Facebook.</footer>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
